@@ -1,0 +1,35 @@
+###Latest
+###Improve
+1. Fix a bug of 0 total gene dected in rcmicrobe function.
+2. Add more optional alignment argument in config.
+3. Fix a bug of pure numeric sample ID.
+
+###2025.07.22
+See v1.3 milestone.
+
+###2025.04.30
+###Improve
+1. Add the --config argument, Which can custom a more detailed lib structure and cell calling method.
+2. The color of UMI-count-UMAP of HTML report now present log10(UMI_count).
+3. The run speed and stability increased.
+
+###2024.12.11
+###Improve
+1. Export unmapped reads.
+2. Warp too long strings in html report.
+3. UMIs with multi gene mapped can be allowed in quantify.
+4. The sequence quality of barcde and UMI region is reported.
+5. The method of UMI adjust can be choose from 'no_adjust', 'step_1' and 'step_1_and_2'.
+6. The detailed version, finish time and specific arguments will be reported in the footer of HTML report.
+
+###2024.10.11
+###Fix
+1. Saturation sometimes doesn't increase with the sampling ratio.
+2. The figs of html report won't show if no reads detected in one of reference species.
+3. The head line of html report show "Mobivision" instead of "MobiVision-M".
+4. Remove unwanted _*.gz file.
+
+###Improve
+1. Reduce the memory cost when statistizing gene type of raw matrix.
+2. Show real mean reads per microbe in report.json.
+3. Export a report of adapator remove.

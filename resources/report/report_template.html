@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>${web_title}</title>
+    <meta name="keywords" content=${web_keywords}>
+    <meta name="description" content=${web_description}>
+    <meta name="viewport" content=${web_viewport}>
+    <link rel="shortcut icon" href=${web_favicon}>
+    <script type="text/javascript" charset="utf-8">${jquery_js}</script>
+    <script type="text/javascript" charset="utf-8">${plotly_js}</script>
+    <!--<script type="text/javascript" charset="utf=8">{mobi.multi_select}</script></!-->
+</head>
+<body>
+<div id="main" style="display: none;">
+    <div class="header">
+        <div class="header-menus">
+            % if web_logo:
+            <div class="header-logo">
+                <img src=${web_logo} height="100%"/>
+            </div>
+            % endif
+            <div class="mobi_report">
+                <span class="label" id="description" en="MobiVision-M Single Microbe Sequencing Report" zh=""></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="sum">
+        <div class="data-details">
+            <div class="details">
+                <div class="d2" id="select_cell_number">${all_cell_number}</div>
+                <span class="label d1" en="Estimated Number of Microbes" zh="" id="select_cell_number_span"></span>
+            </div>
+            <div class="details">
+                <div class="d2" id="select_median_UMI">${all_median_gene}</div>
+                <span class="label d1" en="Median Genes per Microbe" zh="" id="select_median_gene_span"></span>
+            </div>
+            <div class="details">
+                <div class="d2" id="select_mean_reads">${all_mean_reads}</div>
+                <span class="label d1" en="Mean Reads per Microbe" zh=""  id="select_mean_reads_span"></span>
+            </div>
+            <div class="details last">
+                <div class="d2" id="select_median_UMI">${all_median_UMI}</div>
+                <span class="label d1" en="Median UMI Counts per Microbe" zh="" id="select_median_UMI_span"></span>
+            </div>
+        </div>
+    </div>
+    <div class="contents">
+        <div class="content sample">
+            <div class="content-title">
+                <span class="label" en="Sample" zh=""></span>
+            </div>
+            <div class="content-detail">
+                <div class="container-table-dd" >
+                    <div class="column-dd">
+                        <div class="box-dd">
+                            <div class="tdata-name">Sample_ID</div>
+                        </div>
+                        <div class="box-dd">
+                            <div class="tdata-num" id="sample-id" >${Sample_ID}</div>
+                        </div>
+                    </div>
+                    <div class="column-dd">
+                        <div class="box-dd">
+                            <div class="tdata-name">Reference</div>
+                        </div>
+                        <div class="box-dd">
+                            <div class="tdata-num" id="sample-reference">${reference}</div>
+                        </div>
+                    </div>
+                    <div class="column-dd">
+                        <div class="box-dd">
+                            <div class="tdata-name">Library</div>
+                        </div>
+                        <div class="box-dd">
+                            <div class="tdata-num" id="sample-kit">${kit}</div>
+                        </div>
+                    </div>
+                    <div class="column-dd">
+                        <div class="box-dd">
+                            <div class="tdata-name last">Pipeline Version</div>
+                        </div>
+                        <div class="box-dd">
+                            <div class="tdata-num last" id="sample-version">${version}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="content1">
+                <div class="content-title">
+                    <span class="label" en="Microbes" zh=""></span>
+                    <div class="question" onclick="changeQuestion(this)">?</div>
+                </div>
+                <div class="content-question">
+                    <div class="question-main">
+                        <span class="label" style="font-weight: bold;" zh="" en="骤降图 Barcode Rank Plot"></span><br/>
+                        <div style="margin: 0 0 10px 30px;">
+                            <span class="label" zh="" en="该图展示了与每个条形码关联的UMI的数量。灰色区域显示的是与背景相关的条形码，而蓝色区域表示被评估为微生物的条形码。 "></span><br/><span class="label" zh="" en="The plot shows the count of UMIs in each barcode. The gray region shows the background-associated barcodes while the blue region contains the barcodes evaluated as microbes."></span>
+                        </div>
+                        <span class="label" style="font-weight: bold;" zh="" en="微生物数 Estimated Number of Microbes"></span><br/>
+                        <div style="margin: 0 0 10px 30px;">
+                            <span class="label" zh="" en="与微生物相关联的条形码的数目，即高质量微生物数。"></span><br/><span class="label" zh="" en="The number of barcodes associated with microbes."></span>
+                        </div>
+                        <span class="label" style="font-weight: bold;" zh="" en="测序片段平均数 Mean Reads per Microbe"></span><br/>
+                        <div style="margin: 0 0 10px 30px;">
+                            <span class="label" zh="" en="测序片段总数除以高质量微生物数。"></span><br/><span class="label" zh="" en="The total number of reads in the library divided by the number of microbe-associated barcodes."></span>
+                        </div>
+                        <span class="label" style="font-weight: bold;" zh="" en="中值基因数 Median Genes per Microbe"></span><br/>
+                        <div style="margin: 0 0 10px 30px;">
+                            <span class="label" zh="" en="每个高质量微生物中被检测到基因数目的中位数。"></span><br/><span class="label" zh="" en="The median number of genes per microbe-associated barcode detected."></span>
+                        </div>
+                        <span class="label" style="font-weight: bold;" zh="" en="中值UMI数 Median UMI Counts per Microbe"></span><br/>
+                        <div style="margin: 0 0 10px 30px;">
+                            <span class="label" zh="" en="每个高质量微生物中被检测到UMI数目的中位数。"></span><br/><span class="label" zh="" en="The median number of UMI counts per microbe-associated barcode detected."></span>
+                        </div>
+                        <span class="label" style="font-weight: bold;" zh="" en="检测到的总基因数 Total Gene Detected"></span><br/>
+                        <div style="margin: 0 0 10px 30px;">
+                            <span class="label" zh="" en="至少被检测到1个UMI的基因数。子项为属于该物种的barcode中，至少被检测到1个UMI的基因数（不限于该物种）。"></span><br/><span class="label" zh="" en="The number of genes detected with at least 1 UMI. The sub-item refers to the number of genes detected with at least 1 UMI in the barcodes belonging to that species (not limited to genes of that species)."></span>
+                        </div>
+                    </div>
+                    <div class="close" onclick="closeQuestion(this)">×</div>
+                </div>
+                <div class="content-detail">
+                    <div class="row-dsp">
+                        <div class="column-dsp border_right">
+                            <div id="rank_plot" class="chat"></div>
+                        </div>
+                        <div class="column-dsp">
+                            <div id="content-data1" class="content-data-box">
+                                <!--cell count info-->
+                                ${multi_species_info1}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="content1">
+                <div class="content-title">
+                    <span class="label" en="Sequencing & Mapping" zh=""></span>
+                    <div class="question" onclick="changeQuestion(this)">?</div>
+                </div>
+                <div class="content-question">
+                    <div class="question-main">
+                        <span class="label" style="font-weight: bold;" zh=""
+                              en="基于UMI的测序饱和度曲线图 Sequencing Saturation Plot based on UMI"></span><br/>
+                        <div style="margin: 0 0 10px 30px;">
+                            <span class="label" zh="" en="该图展示了此测序文库在不同测序深度下（通过随机取样获得）的测序饱和度。X轴表示对文库的有效测序片段作不同比例的随机取样所得到的测序片段数占总体的比例。测序饱和度可反映测序文库的复杂度和测序深度。基于UMI的测序饱和度为1.0（100%）时，即指所有的转录本均已被测序获得。图中灰色虚线位于y=0.9处，一般默认此处已接近饱和点。 "></span><br/>
+                            <span class="label" zh="" en="This plot shows the Sequencing Saturation in different sequencing depth (by downsampling) of the library. The X-axis represents the number of total reads for different downsampling ratio of the valid reads from the library. The Sequencing Saturation could reflect the library complexity and sequencing depth. When all transcripts in the library have been sequenced, Sequencing Saturation based on UMI reaches 1.0 (100%). The gray dash line is placed at y=0.9, which is considered to be close to the saturation point."></span>
+                        </div>
+                        <span class="label" style="font-weight: bold;" zh=""
+                              en="基于中位基因数的测序饱和度曲线图 Sequencing Saturation Plot based on Median Gene Count"></span><br/>
+                        <div style="margin: 0 0 10px 30px;">
+                            <span class="label" zh="" en="该图展示了此测序文库在不同测序深度下（通过随机取样获得）的测序饱和度。X轴表示对文库的有效测序片段作不同比例的随机取样所得到的测序片段数占总体的比例。y轴表示该抽样比例时，文库的中位基因数。当曲线趋于平缓时，认为此处已接近饱和点。"></span><br/>
+                            <span class="label" zh="" en="This plot shows the Sequencing Saturation in different sequencing depth (by downsampling) of the library. The X-axis represents the number of total reads for different downsampling ratio of the valid reads from the library. he y-axis represents the median number of genes in the library at the given sampling proportion. When the curve becomes flat, it is considered to be close to the saturation point."></span>
+                        </div>
+                        <span class="label" style="font-weight: bold;" zh=""
+                                en="原始测序片段数 Number of Raw Reads">
+                        </span><br/>
+                        <div style="margin: 0 0 10px 30px;">
+                                    <span class="label" zh=""
+                                          en="原始双端测序片段（有时也称为测序读长）的总条数。"></span><br/><span class="label" zh="" en="The number of total raw read pairs in the library."></span><br/>
+                        </div>
+
+                        <span class="label" style="font-weight: bold;" zh=""
+                              en="有效测序片段数 Number of Valid Reads"></span><br/>
+                        <div style="margin: 0 0 10px 30px;">
+                                    <span class="label" zh=""
+                                          en="含有有效条形码的双端测序片段的总条数。"></span><br/><span class="label" zh="" en="The number of read pairs with valid barcodes in the library."></span><br/>
+                        </div>
+
+                        <span class="label" style="font-weight: bold;" zh=""
+                              en="有效测序片段数的占比 Fraction of Valid Reads"></span><br/>
+                        <div style="margin: 0 0 10px 30px;">
+                                    <span class="label" zh=""
+                                          en="含有有效条形码的双端测序片段占文库中所有双端测序片段的比例。"></span><br/><span class="label" zh="" en="The Fraction of valid read pairs in the libray."></span><br/>
+                        </div>
+
+                        <span class="label" style="font-weight: bold;" zh=""
+                              en="测序饱和度 Sequencing Saturation"></span><br/>
+                        <div style="margin: 0 0 10px 30px;">
+                                    <span class="label" zh=""
+                                          en="测序饱和度反映了全部测序片段整体的复杂性和测序深度，可通过计算含有有效条形码和UMI、且能对比至基因组唯一区域的测序片段的冗余度来获得。 "></span><br/><span class="label" zh="" en="This parameter describes the library complexity and sequencing depth. It is a function of the duplication degree of uniquely mapping reads with valid microbe-barcodes and valid UMIs."></span><br/>
+                        </div>
+			<span class="label" style="font-weight: bold;" zh=""
+                              en="条形码和UMI中Q30碱基的比例 Q30 Bases in Barcode+UMI Read"></span><br/>
+                        <div style="margin: 0 0 10px 30px;">
+                                    <span class="label"
+                                          zh=""
+                                          en="在微生物条形码和UMI中Q值>=30（即碱基判读准确率>=99.9%）的碱基在所有测序片段所含碱基总数中所占的比例。这部分碱基来自MobiMicrobe高通量单微生物3’转录组试剂盒所得到的Read1序列。"></span><br/><span class="label" zh="" en="Proportion of microbe-barcode and UMI bases that possess Q-scores >= 30. This is Read1 for MobiMicrobe High-throughtput Single Microbe 3’RNA-Seq Kit."></span>
+                        </div>
+                        <span class="label" style="font-weight: bold;" zh=""
+                              en="RNA测序片段中Q30碱基的比例 Q30 Bases in RNA Read"></span><br/>
+                        <div style="margin: 0 0 10px 30px;">
+                                    <span class="label"
+                                          zh=""
+                                          en="在RNA 测序片段中Q值>=30（即碱基判读准确率>=99.9%）的碱基在所有测序片段所含碱基中所占的比例。这部分碱基来自MobiMicrobe高通量单微生物3’转录组试剂盒所得到的Read2序列。 "></span><br/><span class="label" zh="" en="Proportion of RNA read bases that possess Q-score >= 30. This is Read2 for MobiMicrobe High-throughtput Single Microbe 3’RNA-Seq kit."></span>
+                        </div>
+                        <span class="label" style="font-weight: bold;" zh=""
+                              en="比对至基因组上的测序片段比例 Reads Mapped to Genome"></span><br/>
+                        <div style="margin: 0 0 10px 30px;">
+                                <span class="label" zh=""
+                                      en="所有测序片段中，能够比对至基因组上的测序片段的比例。"></span><br/><span class="label" zh="" en="Proportion of reads mapped to the genome."></span><br/>
+                        </div>
+                        <span class="label" style="font-weight: bold;" zh=""
+                              en="可信比对至基因组上的测序片段比例 Reads Mapped Confidently to Genome"></span><br/>
+                        <div style="margin: 0 0 10px 30px;">
+                                <span class="label" zh=""
+                                      en="所有测序片段中，能够比对至基因组上唯一区域的测序片段的比例。"></span><br/><span class="label" zh="" en="Proportion of reads uniquely mapped to the genome."></span><br/>
+                        </div>
+                    </div>
+                    <div class="close" onclick="closeQuestion(this)">×</div>
+                </div>
+                <div class="content-detail">
+                    <div class="row-dsp">
+                        <div class="column-dsp border_right">
+                            <div id="saturation_plot1" class="chat"></div>
+                            <div id="saturation_plot2" class="chat"></div>
+                        </div>
+                        <div class="column-dsp">
+                            <div id="content-data2" class="content-data-box">
+                                <!--the input info of sample-->
+                                ${input_info}
+                                <!--the mapping info of species-->
+                                ${multi_species_info2}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content" ID="Data_distribution_plot">
+            <div class="content-title">
+                <span class="label" en="Data Distribution" zh=""></span>
+                <div class="question" onclick="changeQuestion(this)">?</div>
+            </div>
+            <div class="content-question">
+                <div class="question-main">
+                    <span class="label" style="font-weight: bold;" zh="" en="UMI数量 UMI Counts"></span><br/>
+                    <div style="margin: 0 0 10px 30px;">
+                        <span class="label" zh="" en="该图展示了每个微生物中被检测到的比对到基因的UMI数量的分布。 "></span><br/><span class="label" zh="" en="The plot shows the distribution of the number of UMI counts which were aligned to genes in each microbe-associated barcode."></span>
+                    </div>
+                    <span class="label" style="font-weight: bold;" zh="" en="基因数量 Gene Counts"></span><br/>
+                    <div style="margin: 0 0 10px 30px;">
+                        <span class="label" zh="" en="该图展示了每个微生物被检测到的基因数量的分布。 "></span><br/><span class="label" zh="" en="The plot shows the distribution of the number of gene counts in each microbe-associated barcode."></span>
+                    </div>
+                    <span class="label" style="font-weight: bold;" zh="" en="物种数量 Abundance Distribution"></span><br/>
+                    <div style="margin: 0 0 10px 30px;">
+                        <span class="label" zh="" en="该图展示了每个物种的相对丰度。 "></span><br/><span class="label" zh="" en="The plot shows the distribution of the number of microbe-associated barcode counts in each species."></span>
+                    </div>
+                    <span class="label" style="font-weight: bold;" zh="" en="基因类型分布 Gene biotype distribution"></span><br/>
+                    <div style="margin: 0 0 10px 30px;">
+                        <span class="label" zh="" en="该图展示了所有物种中，检测到的基因类型分布。只有gtf文件中有gene_biotype注释才会输出该图。其中，MI代表包含了多位置比对的read，ME代表去除了多位置比对的read。"></span><br/><span class="label" zh="" en="The plot shows the distribution of the number of gene counts in each microbe-associated barcode.MI(Multi-alignment Include) implies the multi-position-aligned reads were included. ME(Multi-alignment Exclude) implies the multi-position-aligned reads were excluded"></span>
+                    </div>
+                </div>
+                <div class="close" onclick="closeQuestion(this)">×</div>
+            </div>
+            <!--plots of data distribution-->
+            <div class="content-detail">
+                <div class="row-dsp">
+                    <div class="column-dsp-3 border_right_3">
+                        <div class="chat_1">
+                            <div id="UMI_count_plot"></div>
+                        </div>
+                    </div>
+                    <div class="column-dsp-3">
+                        <div class="chat_1">
+                            <div id="gene_count_plot"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="content-detail">
+                <div class="row-dsp">
+                    <div class="column-dsp-3 border_right_3">
+                        <div class="chat_1">
+                            <div id="speices_abundance_plot"></div>
+                        </div>
+                    </div>
+                    <div class="column-dsp-3">
+                        <div class="chat_1">
+                            <div id="RNA_type_plot"></div>
+                       </div>
+                    </div>
+                 </div>
+            </div>
+        </div>
+
+        <div class="content" ID="UMAP_section">
+            <style>
+                #UMAP_section {
+                    display: ${UMAP_display}
+                }
+            </style>
+            <div class="content-title">
+                <span class="label" en="UMAP Projection" zh=""></span>
+                <div class="question" onclick="changeQuestion(this)">?</div>
+            </div>
+            <!--plots of UMAP-->
+            <div class="content-question">
+                <div class="question-main">
+                            <span class="label" style="font-weight: bold;" zh=""
+                                  en="UMAP降维分析——UMI数量 UMAP Projection of Microbes Colored by UMI Counts"></span><br/>
+                    <div style="margin: 0 0 10px 30px;">
+                                <span class="label" zh=""
+                                      en="该图展示了每个微生物中有效UMI的数量。两个坐标轴对应由UMAP算法生成的谱嵌入。图中每个点代表一个微生物。每个点的颜色由该点所代表的微生物中的UMI总数所决定。微生物中检测到的UMI数量越多，通常表明其RNA含量越高。 "></span><br/><span class="label" zh="" en="The plot shows the valid UMI counts for each microbe-associated barcode. The axes correspond to 2-dimensional embedding produced by the UMAP (Uniform Manifold Approximation and Projection) algorithm. Each dot represents a Microbe and is colored by the number of total UMI counts. Microbes with greater UMIs are prone to possess higher RNA content."></span><br/>
+                    </div>
+                    <span class="label" style="font-weight: bold;" zh=""
+                          en="UMAP降维分析——分群聚类 UMAP Projection of Microbes Colored by Clustering"></span><br/>
+                    <div style="margin: 0 0 10px 30px;">
+                                <span class="label" zh=""
+                                      en="该图展示了通过自动聚类算法计算得到的微生物分布情况。两个坐标轴对应由UMAP算法生成的谱嵌入。图中每个点代表一个微生物。标注为同样颜色的点，其所代表的微生物中转录谱较为相似。 "></span><br/><span class="label" zh="" en="The plot shows the distribution of each microbe-associated barcode by automated clustering algorithm. Each point represents a microbe, and the points with similar color show more similar transcriptomic profiles."></span><br/>
+                    </div>
+                </div>
+                <div class="close" onclick="closeQuestion(this)">×</div>
+            </div>
+            <div class="content-detail">
+                <div class="row-dsp">
+                    <div class="column-dsp-3 border_right_3">
+                        <div class="chat_1">
+                            <div  class="content-data2" id="UMAP_of_UMI_count" >
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column-dsp-3">
+                        <div class="chat_1">
+                            <div  class="content-data2" id="UMAP_of_cluster" >
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        ${foot}
+        ${args}
+    </div>
+    <!--
+    ${run_cmd}
+    -->
+
+    <script type="text/javascript" charset="utf-8">
+        var i_data=${input_json}
+        var tmp_data = JSON.stringify(i_data)
+        var new_data = tmp_data.replace(/"false"/g, "false").replace(/"true"/g, "true")
+        var data = JSON.parse(new_data)
+    </script>
+
+    <script type="text/javascript" charset="utf-8">
+        $(function () {
+            $(".content-question").hide();
+            $("#main").show();
+            exLanguage("en");
+        });
+
+        var exLanguage = function (lang) {
+            $("span.label").empty().append(function () {
+                return $(this).attr(lang);
+            })
+            $(".header-language").removeClass("language-active");
+            if (lang == "en") {
+                $("#en").addClass("language-active");
+            } else {
+                $("#zh").addClass("language-active");
+            }
+        }
+
+        // 显示隐藏提示
+        function changeQuestion(a) {
+            $(a).parent().next().first().toggle();
+        }
+
+        function closeQuestion(a) {
+            $(a).parent().hide();
+        }
+
+        $(document).ready(function(){
+            // rank plot
+            var cells_plot = data.barcode_rank_plot;
+            console.log(data.barcode_rank_plot)
+            $(cells_plot['layout']).attr("width", $("#rank_plot").width()).attr("height", $("#rank_plot").width() /1);
+            line_chat_1 = document.getElementById('rank_plot');
+            Plotly.newPlot(line_chat_1, cells_plot);
+            $("#content-data1").css("padding-top", $("#rank_plot").width() /11);
+
+            // seq_saturation_plot UMI
+            var seq_saturation_plot = data.saturation_plot_UMI;
+            console.log(data.saturation_plot)
+            $(seq_saturation_plot['layout']).attr("width", $("#saturation_plot").width()).attr("height", $("#saturation_plot").width() /1);
+            line_chat_2 = document.getElementById('saturation_plot1');
+            Plotly.newPlot(line_chat_2, seq_saturation_plot);
+            $("#content-data2").css("padding-top", $("#saturation_plot").width() /11);
+
+            // seq_saturation_plot gene
+            var seq_saturation_plot = data.saturation_plot_GENE;
+            console.log(data.saturation_plot)
+            $(seq_saturation_plot['layout']).attr("width", $("#saturation_plot").width()).attr("height", $("#saturation_plot").width() /1);
+            line_chat_2 = document.getElementById('saturation_plot2');
+            Plotly.newPlot(line_chat_2, seq_saturation_plot);
+            $("#content-data2").css("padding-top", $("#saturation_plot").width() /11);
+
+            // gene count plot
+            var boxplot_1_data = data.gene_counts;
+            $(boxplot_1_data['layout']).attr("width", $("#gene_count_plot").width()).attr("height", 400);
+            boxplot_1 = document.getElementById('gene_count_plot');
+            Plotly.newPlot(boxplot_1, boxplot_1_data);
+
+            // boxplot_2_data
+            var boxplot_2_data = data.UMI_counts;
+            $(boxplot_2_data['layout']).attr("width", $("#UMI_count_plot").width()).attr("height", 400);
+            boxplot_2 = document.getElementById('UMI_count_plot');
+            Plotly.newPlot(boxplot_2, boxplot_2_data);
+
+            // boxplot_3_data
+            var boxplot_3_data = data.abundance_plot;
+            console.log(boxplot_3_data)
+            $(boxplot_3_data['layout']).attr("width", $("#speices_abundance_plot").width()).attr("height", 400);
+            boxplot_3 = document.getElementById('speices_abundance_plot');
+            Plotly.newPlot(boxplot_3, boxplot_3_data);
+
+            // boxplot_4_data
+            var boxplot_4_data = data.RNA_type_plot;
+            if (boxplot_4_data.type != "NA"){
+                $(boxplot_4_data['layout']).attr("width", $("#RNA_type_plot").width()).attr("height", 400);
+                boxplot_4 = document.getElementById('RNA_type_plot');
+                Plotly.newPlot(boxplot_4, boxplot_4_data);
+            }
+
+            // marker_chart_1_data
+            var marker_chart_1_data = data.UMAP_count;
+            console.log(marker_chart_1_data)
+            $(marker_chart_1_data['layout']).attr("width", $("#UMAP_of_UMI_count").width()).attr("height", 450);
+            marker_chart_1 = document.getElementById('UMAP_of_UMI_count');
+            Plotly.newPlot(marker_chart_1, marker_chart_1_data);
+
+            // marker_chart_2_data
+            var marker_chart_2_data = data.UMAP_cluster;
+            $(marker_chart_2_data['layout']).attr("width", $("#UMAP_of_cluster").width()).attr("height", 450);
+            marker_chart_2 = document.getElementById('UMAP_of_cluster');
+            Plotly.newPlot(marker_chart_2, marker_chart_2_data);
+        
+        });
+    </script>
+
+    <style type="text/css">
+        @font-face {
+            font-family: 'Noto Sans';
+            src: local('Noto Sans');
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 40px;
+            padding: 20px 150px;
+            background-color: #ffffff;
+            box-shadow: 0 16px 11px -10px rgba(200,200,200,.5);
+            z-index: 378;
+        }
+
+        .header-menus {
+            display: flex;
+            align-items: center;
+        }
+
+        .header-line {
+            border: solid 1px rgb(229, 229, 229);
+            width: 0px;
+            height: 70px;
+        }
+
+        .header-logo {
+            height: 50px;
+            line-height: 50px;
+            padding: 0 40px 0 0;
+            cursor: pointer;
+        }
+        .header-logo img{
+            vertical-align: middle;
+        }
+
+        .header-language {
+            height: 28px;
+            line-height: 28px;
+            padding: 0 5px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-right: 5px;
+        }
+
+        .language-active {
+            background-color: #00a19c;
+            color: rgb(255, 255, 255);
+        }
+
+        .sum{
+            padding: 50px 0;
+            background-repeat-y: repeat;
+            background-size: contain;
+            margin: 30px 0;
+            background-image: url(${web_back});
+        }
+
+        .data-details {
+            background-color: #ffffff00;
+            display: flex;
+            margin: 0px auto;
+            text-align: center;
+            position: relative;
+            font-size: 15px;
+            width: 75%;
+            min-width: 1000px;
+            max-width: 1230px;
+        }
+
+        .details {
+            width: 25%;
+            background-color: #004899;
+            color: white;
+            margin: 0 15px 0 0;
+            padding: 10px 0 15px 0;
+        }
+
+        .last{
+            margin: 0;
+        }
+
+        .d1 {
+            height: 90px;
+            color: #cccccc;
+            letter-spacing: 1px;
+            /* font-size: 8px; */
+        }
+
+        .d2 {
+            letter-spacing: 2px;
+            font-size: 38px;
+            font-weight: bold;
+        }
+
+        .d3 {
+            margin-top: -20px;
+            height: 60px;
+            line-height: 130px;
+            font-size: 26px;
+            font-weight: bold;
+            color: #00a19c;
+        }
+
+        .contents {
+            background-color: #ffffff;
+            padding: 0.1px 0;
+            /** margin: 0 150px 20px;**/
+            width: 75%;
+            min-width: 1000px;
+            max-width: 1230px;
+            margin: 0px auto;
+        }
+
+        .content {
+            margin-bottom: 10px;
+        }
+
+        .content-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0px 10px 15px;
+            background-color: #e0e8f5;
+            font-weight: bolder;
+            font-size: 20px;
+            letter-spacing: 1px;
+            color: #004799;
+        }
+
+        .question {
+            background-color: #92a3ca;
+            color: #ffffff;
+            border-radius: 50%;
+            width: 14px;
+            line-height: 14px;
+            height: 14px;
+            text-align: center;
+            cursor: pointer;
+            padding: 4px 3px 4px 4px;
+            position: relative;
+            left: -20px;
+            font-size: 16px;
+        }
+
+        .close {
+            background-color: #92a3ca;
+            color: #ffffff;
+            border-radius: 50%;
+            width: 14px;
+            line-height: 12px;
+            height: 14px;
+            text-align: center;
+            cursor: pointer;
+            position: relative;
+            font-size: 16px;
+            padding:4px;
+            right:2px
+        }
+
+        .content-detail {
+            border-top: none;
+            padding: 10px 0;
+            border-bottom: 3px solid #f6f6f6;
+            margin-bottom: 30px;
+            overflow:hidden;
+        }
+
+        .content-chart1 {
+            width: 100%;
+            padding: 10px 40px 0px 40px;
+            border-right: 3px solid #f6f6f6;
+        }
+
+        .content-chart2 {
+            width: 100%;
+            padding: 10px 40px 0px 40px;
+            border-right: 3px solid #f6f6f6;
+        }
+
+        .content-data {
+            width: calc(50% - 40px);
+            padding: 0 20px;
+            border-right: 3px solid #f6f6f6;
+        }
+
+        .sample{
+            margin-bottom: 30px
+        }
+
+        .sample .content-detail{
+            padding: 0;
+            border:none
+        }
+
+        .sample .data{
+            align-items: center;
+            padding: 0;
+            width: 25%;
+            display: block;
+            text-align: center;
+            border:none
+        }
+        .sample .data-name {
+            border-right: 3px solid #f6f6f6;
+            border-bottom: 3px solid #f6f6f6;
+            padding: 15px 0;
+            font-size: 16px;
+            font-weight: bolder;
+        }
+
+        .sample .data-num {
+            border-right: 3px solid #f6f6f6;
+            border-bottom: 3px solid #f6f6f6;
+            padding: 15px 0;
+            font-size: 16px;
+            font-weight: bolder;
+        }
+
+        .sample .last {
+            border-right: none;
+        }
+
+        .content-detail .last {
+            border-right: none;
+        }
+
+        .tdata-name {
+            padding: 15px 0;
+            font-size: 16px;
+            font-weight: bolder;
+        }
+
+        .tdata-num {
+            padding: 15px 0;
+            font-size: 16px;
+            font-weight: bolder;
+            color: #004799;
+            white-space: pre-wrap;
+        }
+
+        .chat{
+            position: relative;
+            width: 495px;
+            margin:0 auto
+        }
+
+        .chat_1{
+            position: relative;
+            width: 495px;
+            margin:0 auto
+        }
+
+
+        .data {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: solid 2px #f6f6f6;
+            word-wrap:break-word;
+        }
+
+	    .subdata {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+            border-bottom: solid 2px #f6f6f6;
+            text-indent: 10px;
+            background-color: rgba(255,255,255,0);
+
+            margin-left: 20px;
+
+        }
+
+        .line{
+            border-bottom: solid 2px #f6f6f6;
+        }
+
+        .data-num {
+            color: #004799;
+        }
+
+
+        .row-dsp {
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            flex-wrap: wrap;
+        }
+        .column-dsp {
+            width: 50%;
+            align-items: center;
+            flex: 1;
+        }
+        .content-data-box {
+            width: 90%;
+            max-width:600px;
+            padding: 0px 20px 0px 20px;
+            font-size: 16px;
+            align-items: center;
+            margin: 0 auto;
+            box-sizing:border-box;
+        }
+
+        .column-dsp-3{
+            width: 50%;
+            align-items: center;
+            flex: 1
+        }
+
+        .border_right,.border_right_3,.border_right_2,.border_right_1{
+            border-right: 3px solid #f6f6f6;
+        }
+
+        .svg-container{
+            margin:0 auto !important;
+        }
+
+
+
+        .container-table-dd {
+            display: flex;
+            min-width: 1000px;
+            flex-direction: row;
+            flex-wrap: wrap;
+            align-content: center;
+            justify-content: center;
+        }
+        .column-dd {
+            width: 25%;
+        }
+        .box-dd{
+            background: #FFF;
+            text-align: center;
+            border: 2px solid #F5F5F5;
+            height:80px;
+            border-top: 0px;
+            border-left: 0px;
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            align-content: center;
+            justify-content: center;
+	    white-space: pre
+        }
+
+
+        .footer {
+            position: relative;
+            background-color: #004799;
+            color: #cccccc;
+            width: 100%;
+            text-align: center;
+            height: ${foot_height};
+            line-height: 20px;
+            z-index: 888;
+            font-size:12px
+        }
+
+        body,
+        ol,
+        ul,
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        p,
+        th,
+        td,
+        dl,
+        dd,
+        form,
+        fieldset,
+        legend,
+        input,
+        textarea,
+        select {
+            margin: 0;
+            padding: 0
+        }
+
+        html,
+        body {
+            font-size: 12px;
+            font-family: 'Noto Sans';
+            background: white;
+            -webkit-text-size-adjust: 100%;
+            height: 100%;
+            min-height: 100%;
+        }
+
+        body>.wrap {
+            height: auto;
+            min-height: 100%;
+        }
+
+        a {
+            color: #2d374b;
+            text-decoration: none
+        }
+
+        a:hover {
+            color: #cd0200;
+            text-decoration: underline
+        }
+
+        em {
+            font-style: normal
+        }
+
+        li {
+            list-style: none
+        }
+
+        img {
+            border: 0;
+            vertical-align: middle
+        }
+
+        table {
+            border-collapse: collapse;
+            border-spacing: 0
+        }
+
+        p {
+            word-wrap: break-word
+        }
+
+        .content-question {
+            margin: 10px;
+            padding: 5px;
+            border: 1px solid #dddddd;
+            box-shadow: 2px 2px 2px #dddddd;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .question-main {
+            width: calc(100% - 30px);
+        }
+
+        .mobi_report {
+            letter-spacing: 1px;
+            font-size: 18px;
+            font-weight: bold;
+            line-height: 1.2;
+            margin: 0 10px;
+            z-index: 384;
+            color: #004799;
+        }
+
+        .mobi_report sup {
+            font-size: large;
+        }
+
+        summary::-webkit-details-marker {
+            display: none
+        }
+
+        .sub-data-label:after {
+            width: 18px;
+            height: 18px;
+            line-height: 17px;
+            border-radius: 50%;
+            border: 0px;
+            background: #004799;
+            opacity:0.9; 
+            content: "\271A";
+            color: #ffffff;
+            float: right;
+            font-size: 0.75em;
+            font-weight: bold;
+            margin: 0 10px 0 10px;
+            padding: 0;
+            text-align: center;
+            cursor:pointer;
+        }
+        details[open] .sub-data-label:after  {
+            content: "\2501";
+	        cursor:pointer;
+            line-height: 18px;
+        }
+
+        @media screen and (max-width: 1020px) {
+            .border_right_3{
+                border-right: none;
+            }
+            .column-dsp-3 {
+                width:100%
+            }
+            .border_right{
+                border-right: none
+            }
+            .header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                height: 120px;
+                padding: 20px 50px;
+                background-color: #ffffff;
+                box-shadow: 0 16px 11px -10px rgb(200 200 200 / 50%);
+                z-index: 378;
+            }
+            .header-menus {
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+            }
+            .container-table-dd{
+               min-width: inherit !important;
+            }
+            .column-dd{
+                width:50% !important;
+            }
+            .tdata-name{
+                font-size:14px
+            }
+            .tdata-num{
+                font-size:14px
+            }
+            .mobi_report {
+                letter-spacing: 1px;
+                font-size: 22px;
+                font-weight: bold;
+                line-height: 1.2;
+                margin: 0px 10px;
+                z-index: 384;
+                color: #004799;
+                padding-top: 10px;
+            }
+            .contents {
+               width: 85%;
+               min-width: inherit;
+            }
+
+
+            .data-details {
+                background-color: #ffffff00;
+                display: flex;
+                margin: 0px auto;
+                text-align: center;
+                position: relative;
+                font-size: 15px;
+                width: 85%;
+                min-width: inherit;
+                flex-wrap: wrap;
+            }
+
+            .details {
+                width: 45%;
+                background-color: #004899;
+                color: white;
+                margin: 7.5px;
+                padding: 10px 0 15px 0;
+            }
+
+             .column-dsp {
+                flex-direction: column;
+                flex-basis: 100%;
+                box-sizing：border-box;
+                width: 50%;
+                display: inline-block;
+                transition: width 1s linear 1s, height 1s linear 2s;
+                /* flex-basis: 100%; */
+            }
+
+            .content-data-box {
+                min-width:500px;
+                width: 100%;
+                padding: 0px 40px 0px 40px;
+                font-size: 16px;
+                align-items: center;
+                margin:0 auto;
+                box-sizing:border-box;
+            }
+
+        }
+
+        @media screen and (max-width: 500px) {
+            .chat{
+                width:100% !important;
+            }
+            .chat_1{
+                width:100% !important;
+            }
+            .content-data-box{
+                width:100% !important;
+                min-width:0 !important;
+                padding: 0px 10px 0px 10px;
+            }
+
+            .column-dsp-3 {
+                flex: auto
+            }
+         }
+        </style>
+    </body>
+</html>
