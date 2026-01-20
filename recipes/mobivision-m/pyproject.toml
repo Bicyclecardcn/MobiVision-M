@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "MobiVision-M"
+requires-python = ">=3.8.12"
+dependencies = [
+    "numpy",
+    "pandas",
+    "scanpy",
+    "rtoml",
+    "structlog",
+    "loguru",
+    "mako",
+    "matplotlib",
+    "scikit-learn",
+    "scipy",
+]

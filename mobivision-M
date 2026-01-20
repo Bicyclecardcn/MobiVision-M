@@ -7,10 +7,14 @@
 # @Develop env: vscode
 
 import sys
-if __name__ == '__main__':
+
+def main():
     if len(sys.argv) <= 3:
-        from lib.mobivision_M_cli import CustomHelp
+        from ..mobivision_M_cli import CustomHelp
         CustomHelp(sys.argv)
     else:
-        from lib.mobivision_M_cli import run_MobiVisionM
+        from ..mobivision_M_cli import run_MobiVisionM
         run_MobiVisionM()
+
+if __name__ == '__main__':
+    main()

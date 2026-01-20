@@ -155,7 +155,7 @@ def process_secondary_analysis(filter_data, species_info, cell_stat_data, output
             #reso = 0.5
         min_cells = int(filter_data.n_obs * 0.2)
         sc.pp.filter_genes(filter_data, min_cells=min_cells)
-        if len(species_info) > 10:
+        if len(species_info) >= 2:
             variable_gene_dict = {}
             species_barcode = {}
             apply_high_variable_gene_list = []
