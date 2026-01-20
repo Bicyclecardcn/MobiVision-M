@@ -13,7 +13,7 @@ source:
 build:
   number: {{ build_number }}
   script: 
-    - "{{ PYTHON }} -m pip install . -vv"
+    - cd src && {{ PYTHON }} -m pip install . -vv
     - cp $SRC_DIR/mobivision-M $PREFIX/bin/mobivision-M
     - chmod +x $PREFIX/bin/mobivision-M
   noarch: python
