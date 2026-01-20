@@ -32,7 +32,7 @@ In addition, MobiVision®-M can also build a reference based on a genome sequenc
 ## Basic Analysis Workflow
 
 The basic analysis workflow of the software is as follows:  
-<img src="./software_introduction/MobiVision-M分析流程-20250630_en.bdx.png" alt="analysis_workflow" width="40%" height="auto">  
+<img src="./software_introduction/MobiVision-M-20250630_en.bdx.png" alt="analysis_workflow" width="40%" height="auto">  
 In the figure, the blue parts represent data, and the yellow parts represent processes.  
 The raw sequencing data first undergoes preprocessing, including barcode detection, adapter removal, low-quality or too-short reads removal, and optional host removal. The output is referred as "clean data".  
 The R1 part of the clean data consists of each reads' barcode + UMI. R2 represents the actual microbial transcript fragments detected. Additionally, the barcode whitelist for the sample is included.  
