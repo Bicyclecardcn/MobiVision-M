@@ -1,0 +1,17 @@
+{
+    "fasta_hash": "b3022574db4f91272effb20e60e9e2390612f194",
+    "genomes": [
+        "demo"
+    ],
+    "gtf_hash": "706acc0efbbaa268936e93d2f0d1cc43e4767b98",
+    "input_fasta_files": [
+        "demo.fna"
+    ],
+    "input_gtf_files": [
+        "demo.gtf"
+    ],
+    "mem_gb": 64,
+    "mobi_version": "MobiVision-M v1.3",
+    "ref_version": null,
+    "threads": 1
+}

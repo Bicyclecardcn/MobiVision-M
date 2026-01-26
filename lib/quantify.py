@@ -14,7 +14,10 @@ from mofhandle import file_rearrange
 import configparser
 from configparser import ConfigParser
 from mako_report import ExportReport
-resource_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "resources", "report")
+if os.path.exists(os.path.join(os.environ["CONDA_PREFIX"], "share", "mobivision-m")):
+    resource_dir = os.path.join(os.environ["CONDA_PREFIX"], "share", "mobivision-m", "resources")
+else:
+    resource_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "resources")
 from cmdutil import CheckFastqParam
 from BacDrop_preprocess import BacPreProcess
 from re_assign_multi import re_assign_bam
@@ -24,6 +27,9 @@ from mobivisionexecutor import CommandExecutor
 
 def str2bool(x):
     return x.lower() in ('true')
+
+def in_path(cmd: str) -> bool:
+    return shutil.which(cmd) is not None
 
 def update_config(star_config: str, with_CB: bool, species_number: int, UMI_adjust:str, mobilogger:MobiLoggingSystem):
     ###default config
@@ -36,9 +42,9 @@ def update_config(star_config: str, with_CB: bool, species_number: int, UMI_adju
         if os.path.exists(config_file):
             found_config = True
     if with_CB:
-        filter_file_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "resources", "barcodes", "V2.tsb")
+        filter_file_path = os.path.join(resource_dir, "barcodes", "V2.tsb")
     else:
-        filter_file_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "resources", "barcodes", "V2_without_CB.tsb")
+        filter_file_path = os.path.join(resource_dir, "barcodes", "V2_without_CB.tsb")
     default_config = {"Mobivision-M":{}, "STAR":{}}
     default_config["STAR"]["soloMultiMappers"] = "Unique"
     default_config["STAR"]["nExpectedCells"] = '3000'
@@ -76,12 +82,15 @@ def update_config(star_config: str, with_CB: bool, species_number: int, UMI_adju
     default_config["Mobivision-M"]["UMI_len"] = 10
     default_config["Mobivision-M"]["split_by"] = "NA"
     default_config["Mobivision-M"]["split_func"] = "GO"
-    default_config["Mobivision-M"]["go_script"] = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "bin", "main_pre-process")
+    if in_path("main_pre-process"):
+        default_config["Mobivision-M"]["go_script"] = "main_pre-process"
+    elif os.path.exists(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "bin", "main_pre-process")):
+        default_config["Mobivision-M"]["go_script"] = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "bin", "main_pre-process")
     default_config["Mobivision-M"]["process_cutadapt"] = True
     default_config["Mobivision-M"]["process_fastp"] = True
     default_config["Mobivision-M"]["adpator_list_path"] = None
     default_config["Mobivision-M"]["fastp_adapter_path"] = None
-    default_config["Mobivision-M"]["logo_path"] = resource_dir + "/image/logo.png"
+    default_config["Mobivision-M"]["logo_path"] = os.path.join(resource_dir, "report", "image", "logo.png")
     default_config["Mobivision-M"]["multi_mappers"] = "Unique"
     UMI_method_dict = {"no_adjust":{"soloUMIfiltering":"-", 
                                     "soloUMIdedup":"Exact", 
@@ -293,7 +302,10 @@ class MobivisionProcessM:
         self.R1_file = self.rawfq_path["R1"].split("/")[-1]
         self.R2_file = self.rawfq_path["R2"].split("/")[-1]
         self.dev_mod = dev_mod
-        self.split_bam_program = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "bin", "fetch_multihit")
+        if in_path("fetch_multihit"):
+            self.split_bam_program = "fetch_multihit"
+        else:
+            self.split_bam_program = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "bin", "fetch_multihit")
         self.UMI_adjust = UMI_adjust
         self.nosecondary = nosecondary
         self.keep_bam = keep_bam
@@ -593,14 +605,14 @@ class MobivisionProcessM:
             self.mobilogger._mobilogrecorder(log_message="Making report...", 
                 log_level="INFO")
             report_out_path = os.path.join(self.out_path["ALL"], self.sample_id + "_outs")
-            p = ExportReport(template_file=resource_dir + "/report_template.html", 
+            p = ExportReport(template_file=os.path.join(resource_dir, "report", "report_template.html"), 
                         json_file=report_json, 
                         output_file=os.path.join(report_out_path, self.sample_id + "_report.html"), 
-                        jquery=os.path.join(resource_dir, "js", "jquery-latest.min.js"), 
-                        plotly=os.path.join(resource_dir, "js", "plotly-latest.min.js"),
-                        favicon_file=os.path.join(resource_dir, "image", "favicon.ico"), 
+                        jquery=os.path.join(resource_dir, "report", "js", "jquery-latest.min.js"), 
+                        plotly=os.path.join(resource_dir, "report", "js", "plotly-latest.min.js"),
+                        favicon_file=os.path.join(resource_dir, "report", "image", "favicon.ico"), 
                         web_logo=default_config["Mobivision-M"]["logo_path"], 
-                        web_back=os.path.join(resource_dir, "image","back.png"))
+                        web_back=os.path.join(resource_dir, "report", "image","back.png"))
             p.process()
             tmp_files = os.listdir(report_out_path)
             if self.dev_mod:

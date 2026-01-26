@@ -343,11 +343,16 @@ def run_MobiVisionM():
     if cmd_args.subcmds == "quantify":
         from quantify import MobivisionProcessM
         if cmd_args.test_run:
-            script_path = os.path.dirname(os.path.abspath(__file__))
-            parent_path = os.path.dirname(script_path)
-            cmd_args.input_dir = os.path.join(parent_path, "demo")
-            index_dir = os.path.join(parent_path, "demo", "demo_ref")
-            cmd_args.sample_ID = "demo"
+            if os.path.exists(os.path.join(os.environ["CONDA_PREFIX"], "share", "mobivision-m")):
+                cmd_args.input_dir = os.path.join(os.environ["CONDA_PREFIX"], "share", "mobivision-m", "demo")
+                index_dir = os.path.join(os.environ["CONDA_PREFIX"], "share", "mobivision-m", "demo", "demo_ref")
+                cmd_args.sample_ID = "demo"
+            else:
+                script_path = os.path.dirname(os.path.abspath(__file__))
+                parent_path = os.path.dirname(script_path)
+                cmd_args.input_dir = os.path.join(parent_path, "demo")
+                index_dir = os.path.join(parent_path, "demo", "demo_ref")
+                cmd_args.sample_ID = "demo"
         else:
             ## check fastq files and return real input data directory;
             if not os.path.exists(cmd_args.input_dir):
@@ -371,11 +376,6 @@ def run_MobiVisionM():
         # check host
         if cmd_args.host_remove and not os.path.exists(cmd_args.host_reference):
             mobilogger._mobilogrecorder(log_message="The host reference is not exist. %s" %(cmd_args.host_reference), 
-                log_level="ERROR")
-            sys.exit()
-        # check bg rm
-        if cmd_args.bg_ratio <= 0 or cmd_args.bg_ratio > 1:
-            mobilogger._mobilogrecorder(log_message="The bg ratio must larger than 0 and smaller than 1." %(cmd_args.host_reference), 
                 log_level="ERROR")
             sys.exit()
         ## output the command line into the "run_analysis_cmds.txt"
@@ -422,10 +422,14 @@ def run_MobiVisionM():
         from mkindex import IndexTool
         if cmd_args.test_run:
             in_genomes = ["demo"]
-            script_path = os.path.dirname(os.path.abspath(__file__))
-            parent_path = os.path.dirname(script_path)
-            input_fasta_files = [os.path.join(parent_path, "demo", "demo.fasta")]
-            input_genes_files = [os.path.join(parent_path, "demo", "demo.gtf")]
+            if os.path.exists(os.path.join(os.environ["CONDA_PREFIX"], "share", "mobivision-m")):
+                input_fasta_files = [os.path.join(os.environ["CONDA_PREFIX"], "share", "mobivision-m", "demo", "demo.fasta")]
+                input_genes_files = [os.path.join(os.environ["CONDA_PREFIX"], "share", "mobivision-m", "demo", "demo.gtf")]
+            else:
+                script_path = os.path.dirname(os.path.abspath(__file__))
+                parent_path = os.path.dirname(script_path)
+                input_fasta_files = [os.path.join(parent_path, "demo", "demo.fasta")]
+                input_genes_files = [os.path.join(parent_path, "demo", "demo.gtf")]
         else:
             if cmd_args.input_file != None:
                 if os.path.exists(cmd_args.input_file):
@@ -515,10 +519,6 @@ def run_MobiVisionM():
             sys.exit()
         if core_num <= 0:
             mobilogger._mobilogrecorder(log_message="The threads must be a positive integer larger than 0 (larger than 8 recommanded). cmd_args.core_num" %(cmd_args.host_reference), 
-                log_level="ERROR")
-            sys.exit()
-        if cmd_args.bg_ratio <= 0 or cmd_args.bg_ratio > 1:
-            mobilogger._mobilogrecorder(log_message="The bg ratio must larger than 0 and smaller than 1." %(cmd_args.host_reference), 
                 log_level="ERROR")
             sys.exit()
         p = ReCallCell(analysis_dir=cmd_args.analysis_dir, 

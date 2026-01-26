@@ -122,6 +122,8 @@ def softmax(num_dict:dict):
 def process_secondary_analysis(filter_data, species_info, cell_stat_data, output_path, threads, mobilogger, sim_method="pearson", gene_filter=None, h5ad_out_file=None):
     mobilogger._mobilogrecorder(log_message="├── Running secondary analysis...", log_level="INFO")
     os.environ.pop("OMP_DISPLAY_ENV", None)
+    species_info.pop('all', None)
+    species_info.pop('unknown', None)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         warnings.filterwarnings("ignore")
@@ -149,16 +151,16 @@ def process_secondary_analysis(filter_data, species_info, cell_stat_data, output
         mobilogger._mobilogrecorder(log_message="├──├── Processing of scale is done successfully.", log_level="INFO")
         if len(species_info) == 1:
             expect_bins = 4
-            #reso = 0.05
+            reso = 0.05
         else:
             expect_bins = len(species_info) * 2
-            #reso = 0.5
+            reso = 0.5
         min_cells = int(filter_data.n_obs * 0.2)
         sc.pp.filter_genes(filter_data, min_cells=min_cells)
+        apply_high_variable_gene_list = []
         if len(species_info) >= 2:
             variable_gene_dict = {}
             species_barcode = {}
-            apply_high_variable_gene_list = []
             if cell_stat_data is not None:
                 for i in cell_stat_data.index:
                     tmp_species = cell_stat_data.loc[i, "species"]
@@ -177,9 +179,11 @@ def process_secondary_analysis(filter_data, species_info, cell_stat_data, output
                         sub_filter_data = filter_data[filter_data.obs_names.isin(species_barcode[i])]
                         sub_filter_data = sub_filter_data[:, sub_filter_data.var_names.str.startswith(i)]
                         sc.pl.highest_expr_genes(sub_filter_data, n_top=20)
-                        high_expr_genes = sub_filter_data.var_names[sub_filter_data.X.sum(axis=0).A1.argsort()[-5:]].tolist()
+                        gene_totals = np.ravel(sub_filter_data.X.sum(axis=0))
+                        top_idx = gene_totals.argsort()[-10:]
+                        high_expr_genes = sub_filter_data.var_names[top_idx].tolist()
                         high_expr_genes = [x for x in high_expr_genes if x.startswith(i)]
-                        sc.pp.highly_variable_genes(sub_filter_data, n_top_genes=5)
+                        sc.pp.highly_variable_genes(sub_filter_data, n_top_genes=10)
                         highly_variable_genes = sub_filter_data.var[sub_filter_data.var['highly_variable']].index.tolist()
                         highly_variable_genes = [x for x in highly_variable_genes if x.startswith(i)]
                         variable_gene_dict[i] = list(set(high_expr_genes + highly_variable_genes))
@@ -195,22 +199,28 @@ def process_secondary_analysis(filter_data, species_info, cell_stat_data, output
                 json.dump(variable_gene_dict, json_file, indent=4)
             apply_high_variable_gene_list = list(set(apply_high_variable_gene_list))
             filter_data.var['highly_variable'] = filter_data.var_names.isin(apply_high_variable_gene_list)
-        else:
+        if apply_high_variable_gene_list == []:
             filter_data = try_filter_data.copy()
             min_cells = int(filter_data.n_obs * 0.2)
             sc.pp.filter_genes(filter_data, min_cells=min_cells)
+            if filter_data.n_obs < 100 or filter_data.n_vars < 100:
+                filter_data = try_filter_data.copy()
+                mobilogger._mobilogrecorder(log_message="├──├── No filter applied.", log_level="INFO")
             sc.pp.highly_variable_genes(filter_data,n_bins=expect_bins)
-            sc.pp.regress_out(filter_data,['n_count'])
-            sc.pp.scale(filter_data)
+            #sc.pp.regress_out(filter_data,['n_count'])
+            #sc.pp.scale(filter_data)
         mobilogger._mobilogrecorder(log_message="├──├── Detecting of highly variable gene is done successfully.", log_level="INFO")
         highly_variable_genes = filter_data.var[filter_data.var['highly_variable']]
         with open(os.path.join(output_path, "highly_variable_genes.tsv"), "w") as f:
             for i in highly_variable_genes.index.tolist():
                 f.write(i + "\n")
         try:
+            #if len(highly_variable_genes) > 5:
             sc.tl.pca(filter_data, use_highly_variable=True)
         except Exception as e:
-            npcs = 2
+            #npcs = 2
+            sc.tl.pca(filter_data)
+            npcs = 3
         else:
             if filter_data.obsm['X_pca'].shape[1] > 10:
                 npcs = 10
@@ -219,8 +229,8 @@ def process_secondary_analysis(filter_data, species_info, cell_stat_data, output
         mobilogger._mobilogrecorder(log_message="├──├── Processing of PCA is done successfully.", log_level="INFO")
         sc.pp.neighbors(filter_data, n_pcs = npcs)
         mobilogger._mobilogrecorder(log_message="├──├── Processing of neighbors is done successfully.", log_level="INFO")
-        sc.tl.leiden(filter_data)
-        sc.tl.louvain(filter_data)
+        sc.tl.leiden(filter_data, resolution=reso)
+        sc.tl.louvain(filter_data, resolution=reso)
         mobilogger._mobilogrecorder(log_message="├──├── Processing of leiden and louvain is done successfully.", log_level="INFO")
         sc.tl.umap(filter_data)
         sc.tl.tsne(filter_data)
@@ -981,7 +991,10 @@ class Data_InjectTool:
         filter_df.index = filter_data.obs.loc[:,"barcode"].tolist()
         filter_df.columns = filter_data.var.index.tolist()
         cell_stat_data = pd.read_csv(self.cell_stat_file, sep="\t")
-        UMI_col = "UMI_count"
+        if "gene_UMI_count" in cell_stat_data.columns:
+            UMI_col = "gene_UMI_count"
+        else:
+            UMI_col = "UMI_count"
         cell_stat_data = cell_stat_data.sort_values(by=UMI_col, ascending=False)
         cell_stat_data.index = range(cell_stat_data.shape[0])
         if (len(ref_dict["genomes"]) >= 10 and self.multiplet_method == "auto") or \
@@ -1531,10 +1544,9 @@ class Data_InjectTool:
         cell_stat_data.index = range(cell_stat_data.shape[0])
         self.mobilogger._mobilogrecorder(log_message="├── Processing mapping info is done successfully.", log_level="INFO")
         if self.run_cluster:
-            self.mobilogger._mobilogrecorder(log_message="├── Running secondary analysis...", log_level="INFO")
             with warnings.catch_warnings():
                 filter_data = process_secondary_analysis(filter_data=filter_data.copy(), 
-                                                 species_info=species_info, 
+                                                 species_info=species_info.copy(), 
                                                  cell_stat_data=cell_stat_data, 
                                                  output_path=self.output_path, 
                                                  threads=self.threads, 

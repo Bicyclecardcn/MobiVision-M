@@ -10,10 +10,10 @@ import sys
 
 def main():
     if len(sys.argv) <= 3:
-        from ..mobivision_M_cli import CustomHelp
+        from lib.mobivision_M_cli import CustomHelp
         CustomHelp(sys.argv)
     else:
-        from ..mobivision_M_cli import run_MobiVisionM
+        from lib.mobivision_M_cli import run_MobiVisionM
         run_MobiVisionM()
 
 if __name__ == '__main__':

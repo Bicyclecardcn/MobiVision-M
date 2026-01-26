@@ -12,12 +12,14 @@ from re_assign_multi import call_cell_by_threshold, call_cell_by_STAR
 from mobivisionlogging import MobiLoggingSystem, MobiCommandLogSystem
 from mobivisionexecutor import CommandExecutor
 
-resource_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "resources", "report")
+if os.path.exists(os.path.join(os.environ["CONDA_PREFIX"], "share", "mobivision-m")):
+    resource_dir = os.path.join(os.environ["CONDA_PREFIX"], "share", "mobivision-m", "resources")
+else:
+    resource_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "resources")
 
 class ReCallCell:
     def __init__(self, analysis_dir:str, o_dir:str, call_mtx:str, filter_args:str, sample_ID:str, ver_kit:str, threads:int, nosecondary:bool, \
-                 keep_bam:bool, keep_unmapped:bool, config:dict, multiplet_method:str, mobilogger: MobiLoggingSystem, run_cmd="demno", \
-                 bg_rm=False, bg_ratio=0.1):
+                 keep_bam:bool, keep_unmapped:bool, config:dict, multiplet_method:str, mobilogger: MobiLoggingSystem, run_cmd="demno"):
         self.o_dir = o_dir
         if not mobilogger is None:
             self.mobilogger = mobilogger
@@ -39,9 +41,7 @@ class ReCallCell:
         else:
             self.analysis_dir = analysis_dir
         if call_mtx == None:
-            if os.path.exists(os.path.join(self.analysis_dir, "raw_bg-rm_cell_gene_matrix")):
-                self.fetched_mtx_dir = os.path.join(self.analysis_dir, "raw_bg-rm_cell_gene_matrix")
-            elif os.path.exists(os.path.join(self.analysis_dir, "raw_re-assigned_cell_gene_matrix")):
+            if os.path.exists(os.path.join(self.analysis_dir, "raw_re-assigned_cell_gene_matrix")):
                 self.fetched_mtx_dir = os.path.join(self.analysis_dir, "raw_re-assigned_cell_gene_matrix")
             elif os.path.exists(os.path.join(self.analysis_dir, "raw_cell_gene_matrix")):
                 self.fetched_mtx_dir = os.path.join(self.analysis_dir, "raw_cell_gene_matrix")
@@ -100,8 +100,6 @@ class ReCallCell:
         self.keep_unmapped = keep_unmapped
         self.config = config
         self.multiplet_method = multiplet_method
-        self.bg_rm = bg_rm
-        self.bg_ratio = bg_ratio
         os.makedirs(self.filter_mtx_dir)
         ###cp raw mtx
         tmp_base = os.path.basename(self.fetched_mtx_dir)
@@ -112,9 +110,8 @@ class ReCallCell:
         if os.path.exists(os.path.join(self.analysis_dir, "raw_cell_gene_matrix")) and \
         not os.path.exists(os.path.join(self.o_dir, "raw_cell_gene_matrix")):
             shutil.copytree(os.path.join(self.analysis_dir, "raw_cell_gene_matrix"), os.path.join(self.o_dir, "raw_cell_gene_matrix"))
-        if os.path.exists(os.path.join(self.analysis_dir, "raw_bg-rm_cell_gene_matrix")) and \
-        not os.path.exists(os.path.join(self.o_dir, "raw_bg-rm_cell_gene_matrix")) and not bg_rm:
-            shutil.copytree(os.path.join(self.analysis_dir, "raw_bg-rm_cell_gene_matrix"), os.path.join(self.o_dir, "raw_bg-rm_cell_gene_matrix"))
+        #if os.path.exists(os.path.join(self.analysis_dir, "gene_type.json")):
+        #    shutil.copy(os.path.join(self.analysis_dir, "gene_type.json"), self.o_dir)
         self.fetched_mtx_dir = os.path.join(self.o_dir, os.path.basename(self.fetched_mtx_dir))
         self.mobilogger = MobiLoggingSystem(o_dir=o_dir, dev_mode=False)
         return
@@ -138,32 +135,11 @@ class ReCallCell:
                             last_json=last_json,
                             multiplet_method=self.multiplet_method, 
                             gene_type_file=gene_type_file, 
-                            dev_mod=False, 
-                            bg_rm=self.bg_rm)
+                            dev_mod=False)
         report_json = Exp_test.export_json_microbe()
         return report_json
 
     def process(self):
-        if self.bg_rm:
-            with open(os.path.join(self.o_dir, "report.json"),'r') as load_f:
-                ref = json.load(load_f)
-            species_list = ref['ref']['genomes']
-            self.mobilogger._mobilogrecorder(log_message="Removing backgroud...",
-                log_level="INFO")
-            from rm_background import BackGroundRM
-            bg_rm_mtx_dir = os.path.join(self.o_dir, "raw_bg-rm_cell_gene_matrix")
-            p = BackGroundRM(raw_path=self.fetched_mtx_dir, 
-                        filter_path=None, 
-                        o_path=bg_rm_mtx_dir, 
-                        bk_r=self.bg_ratio, 
-                        barcode_info_file=self.cell_stat_file,
-                        species_list=species_list, 
-                        barcode_file_writein=True,  
-                        threads=self.threads, 
-                        mobilogger=self.mobilogger, 
-                        dev_mod=False)
-            p.process()
-            self.fetched_mtx_dir = bg_rm_mtx_dir
         self.mobilogger._mobilogrecorder(log_message="Cell Calling by %s " %(self.filter_args),
             log_level="INFO")
         if not "min_UMI" in self.filter_args and not "min_reads" in self.filter_args:
@@ -180,24 +156,24 @@ class ReCallCell:
             log_level="INFO")
         try_times = 0
         done = False
-        if not os.path.exists(os.path.join(self.analysis_dir, "gene_info.json")):
+        if not os.path.exists(os.path.join(self.analysis_dir, "gene_type.json")):
             gene_dict = {}
             with gzip.open(os.path.join(self.filter_mtx_dir, "features.tsv.gz"), "r") as f:
                 for line in f:
                     tmp_line = line.decode('utf-8').replace("\n","")
                     tmp_gene = tmp_line.split("\t")[1]
                     gene_dict[tmp_gene] = {"type":"unknown","species":"unknown"}
-            with open(os.path.join(self.o_dir, "gene_info.json"), "w") as json_file:
+            with open(os.path.join(self.o_dir, "gene_type.json"), "w") as json_file:
                 json.dump(gene_dict, json_file, indent=4)
         else:
-            cmd = "cp %s %s" %(os.path.join(self.analysis_dir, "gene_info.json"), os.path.join(self.o_dir, "gene_info.json"))
+            cmd = "cp %s %s" %(os.path.join(self.analysis_dir, "gene_type.json"), os.path.join(self.o_dir, "gene_type.json"))
             os.system(cmd)
         while try_times <= 2:
             #p = multiprocessing.Process(target=self.export_json, args=(self.final_map_stats_flie, 
             #                                                            os.path.join(self.o_dir, "raw_cell_gene_matrix"), 
             #                                                            self.filter_mtx_dir, 
             #                                                            os.path.join(self.analysis_dir, "report.json"), 
-            #                                                            os.path.join(self.o_dir, "gene_info.json")))
+            #                                                            os.path.join(self.o_dir, "gene_type.json")))
             #try_times += 1
             #p.start()
             #p.join()
@@ -214,7 +190,7 @@ class ReCallCell:
             try:
                 tmp_json = self.export_json(self.final_map_stats_flie, os.path.join(self.o_dir, "raw_cell_gene_matrix"), 
                                             self.filter_mtx_dir, os.path.join(self.analysis_dir, "report.json"), 
-                                            os.path.join(self.o_dir, "gene_info.json"))
+                                            os.path.join(self.o_dir, "gene_type.json"))
             except Exception as e:
                 self.mobilogger._mobilogrecorder(log_message="Making report failed. Retry in 1 minute." ,
                     log_level="WARNING")
@@ -229,14 +205,14 @@ class ReCallCell:
             self.mobilogger._mobilogrecorder(log_message="Making report failed." ,
                 log_level="ERROR")
         ###mako report
-        p = ExportReport(template_file=resource_dir + "/report_template.html", 
+        p = ExportReport(template_file=os.path.join(resource_dir, "report", "report_template.html"), 
                     json_file=os.path.join(self.o_dir, "report.json"), 
                     output_file=os.path.join(self.o_dir, self.sample_id + "_report.html"),  
-                    jquery=os.path.join(resource_dir, "js", "jquery-latest.min.js"), 
-                    plotly=os.path.join(resource_dir, "js", "plotly-latest.min.js"),
-                    favicon_file=os.path.join(resource_dir, "image", "favicon.ico"), 
+                    jquery=os.path.join(resource_dir, "report", "js", "jquery-latest.min.js"), 
+                    plotly=os.path.join(resource_dir, "report", "js", "plotly-latest.min.js"),
+                    favicon_file=os.path.join(resource_dir, "report", "image", "favicon.ico"), 
                     web_logo=self.config["Mobivision-M"]["logo_path"], 
-                    web_back=os.path.join(resource_dir, "image","back.png"))
+                    web_back=os.path.join(resource_dir, "report", "image","back.png"))
         p.process()
         ###re-arrange other files
         i_list = os.listdir(self.analysis_dir)

@@ -163,13 +163,13 @@ def get_js(js_file:str):
     return return_str
 
 def image_to_base64(image_dir:str):
-    if os.path.exists(image_dir):
-        with open(image_dir, "rb") as f:
-            base64_data = str(base64.b64encode(f.read()))
-            if base64_data[:2] == "b'":
-                base64_data = "'data:image/png;base64," + base64_data[2:]
-    else:
-        base64_data = ""
+    base64_data = ""
+    if image_dir is not None:
+        if os.path.exists(image_dir):
+            with open(image_dir, "rb") as f:
+                base64_data = str(base64.b64encode(f.read()))
+                if base64_data[:2] == "b'":
+                    base64_data = "'data:image/png;base64," + base64_data[2:]
     return base64_data
 
 def find_first_difference(str1, str2):
