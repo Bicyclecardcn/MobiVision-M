@@ -55,16 +55,8 @@ Currently, MobiVision®-M v1.3 includes three subcommands:
 
 ## Software Installation 
 
-Extract the MobiVision-M_v1.3.tar.gz file. Execute the source command in the shell command line to activate the MobiVision-M v1.3 software environment.  
-Each time you open a new shell window or terminal interface, you need to execute the “source” command again.
-```
-### Extract MobiVision-M
-tar -zxvf MobiVision-M_v1.3.tar.gz
-### Activate the MobiVision-M runtime environment
-source MobiVision-M_v1.3/source.sh
-### Test whether MobiVision-M is installed successfully
-mobivision-M --help
-```
+### Install from conda 
+Working
 
 <hr>
 

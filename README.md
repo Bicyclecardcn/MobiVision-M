@@ -11,24 +11,26 @@ Start from raw data, MobiVision-M preforms barcoding, adaptor-removing, alignmen
 
 ## Environment
 MobiVision-M was tested in an environment where the following software is available in PATH:
-1) STAR (2.7.10b)
-2) samtools (1.12)
-3) fastqc (v0.12.1)
-4) cutadapt (3.5)
-5) fastp (0.23.4)
-6) python (3.8.12)
+1) STAR ==2.7.10b
+2) samtools ==1.12
+3) fastqc 
+4) cutadapt ==3.5
+5) fastp
+6) python >=3.8,<3.9
 
 MobiVision-M was tested in an environment where the following packages installed:
-1) pandas	1.4.2
-2) numpy	1.24.4
-3) scanpy	1.9.8
-4) rtoml	0.9.0
-5) structlog	25.3.0
-6) loguru	0.7.3
-7) mako	1.3.0
-8) matplotlib	3.6.0
-9) sklearn	0.24.2
-10) scipy	1.10.1
+1) pandas
+2) numpy
+3) scanpy	<=1.9.8
+4) rtoml
+5) structlog
+6) loguru
+7) mako
+8) matplotlib
+9) sklearn
+10) scipy
+11) leidenalg
+12) louvain
 
 ## Quick start
 ### Making an index
@@ -69,8 +71,11 @@ mobivision-M rcmicrobe \
 
 
 ## Author/Support
-Shan Chao, 
+Shan Chao, shanchao@mobidrop.com
 
 ## Limitations/License
+Apache-2.0 license
 
-## Funding
+## About Us
+This project is **created and maintained by [MobiDrop]**.
+- **Website**: [https://www.mobidrop.com/](https://www.mobidrop.com/)
