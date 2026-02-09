@@ -19,8 +19,8 @@ if os.path.exists(os.path.join(os.environ["CONDA_PREFIX"], "share", "mobivision-
 else:
     resource_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "resources")
 from cmdutil import CheckFastqParam
-from BacDrop_preprocess import BacPreProcess
-from re_assign_multi import re_assign_bam
+from preprocess import BacPreProcess
+from re_assign_multi import re_assign_read
 from mobivisionlogging import MobiLoggingSystem, MobiCommandLogSystem
 from mobivisionexecutor import CommandExecutor
 
@@ -254,7 +254,7 @@ class MobivisionProcessM:
                  topcell_n:int, emptydrop_opt:bool, harder_filter: str, vers_kit: str, \
                  run_cmd: str, mobilogger: MobiLoggingSystem, new_sampleid=None, with_CB=False, star_config="NA", dev_mod=False, UMI_adjust="no_adjust", 
                  nosecondary=False, keep_bam=False, keep_unmapped=False, multiplet_method="auto", qc_only=False, 
-                 host_remove=False, host_reference="NA"):
+                 host_remove=False, host_reference="NA", Temperature = 2):
         self.mobilogger = mobilogger
         self.mobicommandlogger = MobiCommandLogSystem(o_dir=self.mobilogger.working_path, dev_mode=False)
         self.mobiexecutor = CommandExecutor(log_system=self.mobicommandlogger, console_output=False)
@@ -314,8 +314,9 @@ class MobivisionProcessM:
         self.qc_only = qc_only
         self.host_remove = host_remove
         self.host_reference = host_reference
+        self.Temperature = Temperature
 
-    def map_result(self):
+    def __map_reads(self):
         if not os.path.isdir(self.map_result_dir["ALL"]):
             os.makedirs(self.map_result_dir["ALL"])
         r1_path = None
@@ -441,7 +442,8 @@ class MobivisionProcessM:
                             multiplet_method=self.multiplet_method, 
                             host_remove=self.host_remove, 
                             mobilogger=self.mobilogger, 
-                            dev_mod=self.dev_mod)
+                            dev_mod=self.dev_mod, 
+                            Temperature = self.Temperature)
         report_json = Exp_test.export_json_microbe()
         return report_json
     
@@ -535,7 +537,7 @@ class MobivisionProcessM:
             temp_filter_stat = pd.read_csv(os.path.join(self.pre_process_dir, temp_name), sep="\t")
             estimate_read_number = temp_filter_stat.loc[0, "passed_reads"]
             ###mapping
-            map_status, raw_mtx_dir, summary_dir, allow_multi_target_UMI, reclaim_UMI = self.map_result()
+            map_status, raw_mtx_dir, summary_dir, allow_multi_target_UMI, reclaim_UMI = self.__map_reads
             ###note end mapping time
             now = datetime.datetime.now()
             formatted_date = now.strftime("%Y-%m-%d %H:%M:%S")
@@ -547,7 +549,7 @@ class MobivisionProcessM:
             sub_process_data.loc[current_add, "start"] = formatted_date
             sub_process_data.loc[current_add, "process"] = "re-assign_mulit-alignments" 
             ###fetch mulihit
-            fetched_bam_file, alignment_stat_file, fetched_mtx, filter_fetched_mtx = re_assign_bam(map_result_dir=self.map_result_dir["ALL"], 
+            fetched_bam_file, alignment_stat_file, fetched_mtx, filter_fetched_mtx = re_assign_read(map_result_dir=self.map_result_dir["ALL"], 
                                                                     raw_mtx_dir=raw_mtx_dir,
                                                                     sample_id=self.sample_id,
                                                                     split_bam_program=self.split_bam_program,

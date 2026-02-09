@@ -92,6 +92,10 @@ class ArgSetting:
             help="Use a minium gene or UMI threshold to call microbes.", 
             default=None
         )
+        scmd_quan.add_argument("--temperature", 
+                        help="The Temperature of softmax.", 
+                        default=2, 
+                        type=int)
         scmd_quan.add_argument(
              '--kit', metavar='<Kit Version>',
              help="Set the version of scRNA-seq kit. The default setting is 'Unknown'.",
@@ -281,6 +285,10 @@ class ArgSetting:
             type=str, 
             default="auto"
         )
+        scmd_quan.add_argument("--temperature", 
+                        help="The Temperature of softmax.", 
+                        default=2, 
+                        type=int)
         scmd_rcell.add_argument(
             '--ksmiaa', 
             '--dev', 
@@ -413,6 +421,7 @@ def run_MobiVisionM():
                             multiplet_method=cmd_args.multiplet_method, 
                             host_remove=cmd_args.host_remove, 
                             host_reference=cmd_args.host_reference, 
+                            Temperature=cmd_args.temperature, 
                             mobilogger=mobilogger)
         mp.process()
         with open(os.path.join(out_abs_path, "Job_done.flag"), "w") as f:
@@ -533,7 +542,8 @@ def run_MobiVisionM():
                         keep_unmapped=cmd_args.keep_unmap_reads, 
                         multiplet_method=cmd_args.multiplet_method, 
                         config=default_config, 
-                        mobilogger=mobilogger)
+                        mobilogger=mobilogger, 
+                        Temperature=cmd_args.temperature)
         p.process()
         with open(os.path.join(out_abs_path, "Job_done.flag"), "w") as f:
             f.write("The quantify process done succeccfully.")
@@ -570,6 +580,7 @@ OPTIONS:
   --host_reference      The reference of host. Made form sub-command mkindex.
   --qc_only             Only run the QC process.
   --test_run            Run the small demo data of quantify.
+  --temperature         Temperature of softmax
   --kit                 Set the version of RNA kit used to construct the library. The default setting is 'v1.0'.
   --config              The config file with more detailed arguments. Check the user mannul for more information. Default is "NA"
   -h, --help            Show this information.''' ,
@@ -631,6 +642,7 @@ OPTIONS:
   --keep_bam            Keep the bam file of alignment.
   --keep_unmap_reads       Keep the un-aligned reads.
   --kit                 Set the version of RNA kit used to construct the library. The default setting is 'v1.0'.
+  --temperature         Temperature of softmax
   --config              The config file with more detailed arguments. Check mannul for more information. Default is "NA"
   -h, --help            Show this information.''', 
                  "MobiVision_help": '''MobiVision-M-v1.3.2

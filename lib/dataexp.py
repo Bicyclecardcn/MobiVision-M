@@ -16,7 +16,6 @@ import copy
 sys.path.append(os.path.dirname(__file__))
 from mobivisionlogging import MobiLoggingSystem, MobiCommandLogSystem
 from mobivisionexecutor import CommandExecutor
-from qlentille_generate import BrowserExpData
 import shutil
 from sklearn.metrics import silhouette_score, pairwise_distances
 from sklearn.neighbors import KernelDensity
@@ -92,32 +91,58 @@ def continuous_color(start_color:str, end_color:str, rate:float):
             return_cor.append(tmp_value)
     return RGB_to_Hex(return_cor)
 
-def softmax(num_dict:dict):
-    #shrink data by T
-    return_dict = {}
-    for flag in num_dict.keys():
-        num_array = num_dict[flag]
-        if sum(num_array) == 0:
-            return_dict[flag]=[-1, num_array]
-        else:
-            tmp_max = max(num_array)
-            tmp_fold = np.ceil(np.log10(tmp_max))
-            if tmp_fold >= 2:
-                tmp_fold += -2
-                T = np.power(10, tmp_fold)
-            else:
-                T = 1
-            num_array = num_array / T
-            #softmax
-            exp_values = np.exp(num_array)
-            tmp_sum = np.sum(exp_values)
-            normalized_values = exp_values / tmp_sum
-            max_key = np.argmax(normalized_values)
-            if normalized_values[max_key] >= 0.9:
-                return_dict[flag]=[max_key, normalized_values]
-            else:
-                return_dict[flag]=[-1, normalized_values]
-    return return_dict
+def softmax_vectorized(apply_array, species_list, Temp=1):
+    """
+    Vectorized softmax calculation, replacing the original per-dictionary processing
+    
+    Parameters:
+    -----------
+    apply_array : np.ndarray, shape (n_cells, n_species)
+        Alignment counts for each cell across all species
+    species_list : list
+        List of species names corresponding to columns of apply_array
+    Temp : float
+        Temperature parameter
+    
+    Returns:
+    --------
+    species_assignments : np.ndarray, shape (n_cells,)
+        Assigned species index for each cell, -1 indicates uncertain assignment
+    """
+    # Handle zero-sum rows
+    row_sums = apply_array.sum(axis=1)
+    non_zero_mask = row_sums > 0
+    
+    # Initialize results with -1 (unknown)
+    result = np.full(len(apply_array), -1, dtype=int)
+    
+    if not non_zero_mask.any():
+        return result
+    
+    # Only process non-zero rows
+    valid_data = apply_array[non_zero_mask]
+    
+    # Auto-scaling (simulating original logic)
+    max_vals = valid_data.max(axis=1, keepdims=True)
+    log10_max = np.ceil(np.log10(np.maximum(max_vals, 1)))
+    scales = np.power(10, np.maximum(log10_max - 2, 0))
+    
+    # Scale and apply temperature
+    scaled_data = valid_data / scales / Temp
+    
+    # Compute softmax
+    exp_data = np.exp(scaled_data - scaled_data.max(axis=1, keepdims=True))  # Numerical stability
+    softmax_probs = exp_data / exp_data.sum(axis=1, keepdims=True)
+    
+    # Determine maximum probability indices
+    max_probs = softmax_probs.max(axis=1)
+    max_indices = softmax_probs.argmax(axis=1)
+    
+    # Confidence threshold 0.9
+    confident_mask = max_probs >= 0.9
+    result[non_zero_mask] = np.where(confident_mask, max_indices, -1)
+    
+    return result
 
 def process_secondary_analysis(filter_data, species_info, cell_stat_data, output_path, threads, mobilogger, sim_method="pearson", gene_filter=None, h5ad_out_file=None):
     mobilogger._mobilogrecorder(log_message="├── Running secondary analysis...", log_level="INFO")
@@ -395,7 +420,7 @@ class Data_InjectTool:
     def __init__(self, sample_ID, output_path, pre_stat_file, input_stat_file, filter_stats_file, saturation_file, 
                  raw_mtx_path, filter_mtx_path, cell_stat_file, kit, reference_json_path, run_cmd, threads, 
                  run_cluster=True, last_json='NA', gene_type_file=None, multiplet_method="auto", host_remove=False, 
-                 mobilogger=None, dev_mod=False):
+                 mobilogger=None, dev_mod=False, Temperature = 2):
         self.output_path = output_path
         if mobilogger == None:
             self.mobilogger = MobiLoggingSystem(o_dir=self.output_path, dev_mode=dev_mod)
@@ -435,6 +460,7 @@ class Data_InjectTool:
         else:
             self.o_json = {}
         self.down_list = list(np.arange(0, 1, 0.1))
+        self.Temperature = Temperature
 
     def run_export(self):
         out_jsonf = self.export_json_microbe()    
@@ -1000,31 +1026,14 @@ class Data_InjectTool:
         if (len(ref_dict["genomes"]) >= 10 and self.multiplet_method == "auto") or \
             self.multiplet_method == "scaled_softmax":
             self.mobilogger._mobilogrecorder(log_message="├── Re-assigning barcode-species by softmax...", log_level="INFO")
-            pool = multiprocessing.Pool(processes = self.threads)
-            all_task = []
+            # 向量化
             apply_array = cell_stat_data[ref_dict["genomes"]].values.astype(float)
-            apply_dict = {}
-            for i in range(apply_array.shape[0]):
-                apply_dict[i] = apply_array[i]
-                if len(apply_dict) >= 10000:
-                    tmp_args = [apply_dict]
-                    all_task.append(pool.apply_async(softmax, tmp_args))
-                    apply_dict = {}
-            if len(apply_dict) > 0:
-                tmp_args = [apply_dict]
-                all_task.append(pool.apply_async(softmax, tmp_args))
-                apply_dict = {}
-            pool.close()
-            for res in all_task:
-                tmp_dict = res.get()
-                for i in tmp_dict.keys():
-                    tmp_species_key = tmp_dict[i][0]
-                    if tmp_species_key == -1:
-                        tmp_species = "unknown"
-                    else:
-                        tmp_species = ref_dict["genomes"][tmp_species_key]
-                    cell_stat_data.loc[i, "species"] = tmp_species
-            pool.join()
+            species_indices = softmax_vectorized(apply_array, ref_dict["genomes"], self.Temperature)
+            # 直接赋值
+            cell_stat_data["species"] = [
+                ref_dict["genomes"][idx] if idx >= 0 else "unknown" 
+                for idx in species_indices
+            ]
             self.mobilogger._mobilogrecorder(log_message="├── Re-assigning barcode-species by softmax is done successfully.", log_level="INFO")
         cell_stat_data.to_csv(os.path.join(self.output_path, "barcode_info.tsv.gz"), sep="\t", index=False, compression='gzip')
         passed_barcode = filter_df.index.tolist()
@@ -1564,18 +1573,6 @@ class Data_InjectTool:
                 else:
                     self.mobilogger._mobilogrecorder(log_message="├── Feature.tsv not found in %s." %(self.filter_mtx_path), log_level="ERROR")
                     sys.exit()
-                tmp_raw_mtx = self.prepare_raw_mtx(i_dir=self.raw_mtx_path, mtx_file="matrix.mtx", \
-                                                   feature_file="features.tsv", barcode_file="barcodes.tsv", \
-                                                    ref=ref_dict, barcode_list=exp_barcodes)
-                sc.pp.normalize_total(tmp_raw_mtx, target_sum=10000)
-                filter_data.raw = tmp_raw_mtx
-                p = BrowserExpData(adata_bat=filter_data, 
-                                   exp_data=tmp_raw_mtx, 
-                                   gene_df=tmp_gene_df, 
-                                   rebuild_form_X=True, 
-                                   out_prefix_ame=os.path.join(self.output_path, self.sample_ID), 
-                                   mobilogger=self.mobilogger)
-                p.run()
                 self.mobilogger._mobilogrecorder(log_message="└── Secondary analysis is done successfully.", log_level="INFO")
         else:
             UMAP_count_plot = dict()

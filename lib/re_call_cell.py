@@ -19,7 +19,8 @@ else:
 
 class ReCallCell:
     def __init__(self, analysis_dir:str, o_dir:str, call_mtx:str, filter_args:str, sample_ID:str, ver_kit:str, threads:int, nosecondary:bool, \
-                 keep_bam:bool, keep_unmapped:bool, config:dict, multiplet_method:str, mobilogger: MobiLoggingSystem, run_cmd="demno"):
+                 keep_bam:bool, keep_unmapped:bool, config:dict, multiplet_method:str, mobilogger: MobiLoggingSystem, run_cmd="demno", 
+                 Temperature = 2):
         self.o_dir = o_dir
         if not mobilogger is None:
             self.mobilogger = mobilogger
@@ -114,6 +115,7 @@ class ReCallCell:
         #    shutil.copy(os.path.join(self.analysis_dir, "gene_type.json"), self.o_dir)
         self.fetched_mtx_dir = os.path.join(self.o_dir, os.path.basename(self.fetched_mtx_dir))
         self.mobilogger = MobiLoggingSystem(o_dir=o_dir, dev_mode=False)
+        self.Temperature = Temperature
         return
     
     def export_json(self, final_map_stats_flie, raw_mtx_dir, final_mtx, last_json, gene_type_file):
@@ -135,7 +137,8 @@ class ReCallCell:
                             last_json=last_json,
                             multiplet_method=self.multiplet_method, 
                             gene_type_file=gene_type_file, 
-                            dev_mod=False)
+                            dev_mod=False, 
+                            Temperature = self.Temperature)
         report_json = Exp_test.export_json_microbe()
         return report_json
 

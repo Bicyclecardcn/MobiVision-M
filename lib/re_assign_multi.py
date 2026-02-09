@@ -360,7 +360,7 @@ def call_cell_by_threshold(mtx_dir:str, cell_stat_file:str, filter_args:str, fil
     #os.remove(os.path.join(filter_mtx_dir, "matrix_tmp.mtx.gz"))
     return filter_mtx_dir
 
-def re_assign_bam(map_result_dir:str, raw_mtx_dir:str, sample_id:str, 
+def re_assign_read(map_result_dir:str, raw_mtx_dir:str, sample_id:str, 
                   split_bam_program:str, filter_args:str, threads:int, 
                   ref_json_path:str, read_number:int, dev_mod=True, 
                   allow_multi_target_UMI=False, reclaim_UMI=False, mobilogger=None, 
@@ -482,29 +482,8 @@ class fetch_multi_reads:
         else:
             self.mobilogger = MobiLoggingSystem(o_dir=self.o_dir, dev_mode=False)
 
-    #def re_call_mtx(self):
-    #    tmp_path = os.path.exists(self.o_dir, "_STARtmp2")
-    #    i_list = os.listdir(self.map_result_dir)
-    #    found = False
-    #    for i in i_list:
-    #        expect_file = os.path.join(self.map_result_dir, i, "raw_cell_gene_matrix", "matrix.mtx.gz")
-    #        if os.path.exists(expect_file):
-    #            found = True
-    #            break
-    #    if not found:
-    #        #prog_runlog(time.strftime("%Y-%m-%d %H:%M:%S\t", time.localtime()) + "Mtx file not found in %s. Plz recheck." %(self.map_result_dir))
-    #        self.mobilogger._mobilogrecorder(log_message="Mtx file not found in %s. Plz recheck." %(self.map_result_dir), 
-    #            log_level="ERROR")
-    #        sys.exit()
-    #    fetched_mtx_dir = os.path.join(self.map_result_dir, i, "raw_cell_gene_matrix")
-    #    filter_mtx_dir = os.path.join(self.o_dir, "filtered_cell_gene_matrix")
-    #    cmd = "STAR --outTmpDir %s --runMode soloCellFiltering %s %s --soloCellFilter %s " %(tmp_path, fetched_mtx_dir, filter_mtx_dir, self.filter_args)
-    #    subprocess.call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, shell=True)
-    #    if os.path.exists(tmp_path):
-    #        cmd = "rm -r %s " %(tmp_path)
-    #        os.system(cmd)
     def process(self):
-        fetched_bam_file, alignment_stat_file, fetched_mtx, filtered_mtx = re_assign_bam(map_result_dir=self.map_result_dir, 
+        fetched_bam_file, alignment_stat_file, fetched_mtx, filtered_mtx = re_assign_read(map_result_dir=self.map_result_dir, 
                                                                            sample_id=self.sample_id,
                                                                            split_bam_program=self.split_bam_program,
                                                                            filter_args=self.filter_args, 
