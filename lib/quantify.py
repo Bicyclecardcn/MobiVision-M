@@ -510,7 +510,7 @@ class MobivisionProcessM:
         if not self.qc_only:
             ori_sample_id = self.sample_id
             ori_outpath = self.out_path["ALL"]
-            ready_sample = pd.read_csv(os.path.join(self.pre_process_dir, self.id_reset + "_sample_barcode_stat.tsv"), sep="\t")
+            ready_sample = pd.read_csv(os.path.join(self.pre_process_dir, self.id_reset + "_sample_barcode_stat.tsv"), sep="\t", dtype={"sample_barcode": 'str'})
             ###note the end pre-process time
             now = datetime.datetime.now()
             formatted_date = now.strftime("%Y-%m-%d %H:%M:%S")
@@ -537,7 +537,7 @@ class MobivisionProcessM:
             temp_filter_stat = pd.read_csv(os.path.join(self.pre_process_dir, temp_name), sep="\t")
             estimate_read_number = temp_filter_stat.loc[0, "passed_reads"]
             ###mapping
-            map_status, raw_mtx_dir, summary_dir, allow_multi_target_UMI, reclaim_UMI = self.__map_reads
+            map_status, raw_mtx_dir, summary_dir, allow_multi_target_UMI, reclaim_UMI = self.__map_reads()
             ###note end mapping time
             now = datetime.datetime.now()
             formatted_date = now.strftime("%Y-%m-%d %H:%M:%S")

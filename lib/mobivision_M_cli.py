@@ -285,7 +285,7 @@ class ArgSetting:
             type=str, 
             default="auto"
         )
-        scmd_quan.add_argument("--temperature", 
+        scmd_rcell.add_argument("--temperature", 
                         help="The Temperature of softmax.", 
                         default=2, 
                         type=int)

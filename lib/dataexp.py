@@ -112,36 +112,51 @@ def softmax_vectorized(apply_array, species_list, Temp=1):
     # Handle zero-sum rows
     row_sums = apply_array.sum(axis=1)
     non_zero_mask = row_sums > 0
-    
+
     # Initialize results with -1 (unknown)
     result = np.full(len(apply_array), -1, dtype=int)
-    
+
     if not non_zero_mask.any():
         return result
-    
+
     # Only process non-zero rows
     valid_data = apply_array[non_zero_mask]
-    
+
     # Auto-scaling (simulating original logic)
     max_vals = valid_data.max(axis=1, keepdims=True)
     log10_max = np.ceil(np.log10(np.maximum(max_vals, 1)))
-    scales = np.power(10, np.maximum(log10_max - 2, 0))
-    
+    scales = np.power(10, np.maximum(log10_max - 3, 0))
+
     # Scale and apply temperature
     scaled_data = valid_data / scales / Temp
-    
+
     # Compute softmax
     exp_data = np.exp(scaled_data - scaled_data.max(axis=1, keepdims=True))  # Numerical stability
     softmax_probs = exp_data / exp_data.sum(axis=1, keepdims=True)
-    
-    # Determine maximum probability indices
+
+    # Determine maximum probability indices and values
     max_probs = softmax_probs.max(axis=1)
     max_indices = softmax_probs.argmax(axis=1)
-    
-    # Confidence threshold 0.9
-    confident_mask = max_probs >= 0.9
+
+    # Get the original UMI counts (before scaling) for ratio check
+    # Sort each row to get top 2 UMI counts
+    sorted_umis = np.sort(valid_data, axis=1)[:, ::-1]  # Descending order
+    top_umi = sorted_umis[:, 0]      # Highest UMI count
+    second_umi = sorted_umis[:, 1]   # Second highest UMI count
+
+    # Check if second highest UMI is 0 (avoid division by zero)
+    # If second highest is 0, any positive top_umi satisfies "more than 2x"
+    umi_ratio_check = np.where(
+        second_umi == 0,
+        top_umi > 0,  # If second is 0, check if top is positive
+        top_umi > 2 * second_umi  # Otherwise check 2x ratio
+    )
+
+    # Combined confidence check: both probability >= 0.9 AND UMI > 2x
+    confident_mask = (max_probs >= 0.9) & umi_ratio_check
+
     result[non_zero_mask] = np.where(confident_mask, max_indices, -1)
-    
+
     return result
 
 def process_secondary_analysis(filter_data, species_info, cell_stat_data, output_path, threads, mobilogger, sim_method="pearson", gene_filter=None, h5ad_out_file=None):
@@ -154,36 +169,36 @@ def process_secondary_analysis(filter_data, species_info, cell_stat_data, output
         warnings.filterwarnings("ignore")
         try_filter_data = filter_data.copy()
         ###filter cells with gene count less than 30, more than 10000
-        sc.pp.filter_cells(try_filter_data, min_genes=30)
-        sc.pp.filter_cells(try_filter_data, max_genes=10000)
-        mobilogger._mobilogrecorder(log_message="├──├── Filtering cell by gene count is done successfully.", log_level="INFO")
-        ###filter cells with UMI count less than 50
-        sc.pp.filter_cells(try_filter_data, min_counts=50)
-        mobilogger._mobilogrecorder(log_message="├──├── Filtering cell by UMI count is done successfully.", log_level="INFO")
-        ###filter genes with present less in 3 cells
-        sc.pp.filter_genes(try_filter_data, min_cells=3)
-        mobilogger._mobilogrecorder(log_message="├──├── Filtering gene by min expression is done successfully.", log_level="INFO")
-        if try_filter_data.n_obs >= 100 and try_filter_data.n_vars >= 100:
-            filter_data = try_filter_data.copy()
-        sc.pp.normalize_total(filter_data,target_sum=1e6, exclude_highly_expressed=False, max_fraction=0.1)
-        mobilogger._mobilogrecorder(log_message="├──├── Processing of normalization is done successfully.", log_level="INFO")
-        sc.pp.log1p(filter_data)
-        mobilogger._mobilogrecorder(log_message="├──├── Processing of log1p is done successfully.", log_level="INFO")
-        try_filter_data = filter_data.copy()
-        sc.pp.regress_out(filter_data,['n_count'])
-        mobilogger._mobilogrecorder(log_message="├──├── Processing of regress is done successfully.", log_level="INFO")
-        sc.pp.scale(filter_data)
-        mobilogger._mobilogrecorder(log_message="├──├── Processing of scale is done successfully.", log_level="INFO")
+        #sc.pp.filter_cells(try_filter_data, min_genes=30)
+        #sc.pp.filter_cells(try_filter_data, max_genes=10000)
+        #mobilogger._mobilogrecorder(log_message="├──├── Filtering cell by gene count is done successfully.", log_level="INFO")
+        ####filter cells with UMI count less than 50
+        #sc.pp.filter_cells(try_filter_data, min_counts=50)
+        #mobilogger._mobilogrecorder(log_message="├──├── Filtering cell by UMI count is done successfully.", log_level="INFO")
+        ####filter genes with present less in 3 cells
+        #sc.pp.filter_genes(try_filter_data, min_cells=3)
+        #mobilogger._mobilogrecorder(log_message="├──├── Filtering gene by min expression is done successfully.", log_level="INFO")
+        #if try_filter_data.n_obs >= 100 and try_filter_data.n_vars >= 100:
+        #    filter_data = try_filter_data.copy()
+        #sc.pp.normalize_total(filter_data,target_sum=1e6, exclude_highly_expressed=False, max_fraction=0.1)
+        #mobilogger._mobilogrecorder(log_message="├──├── Processing of normalization is done successfully.", log_level="INFO")
+        #sc.pp.log1p(filter_data)
+        #mobilogger._mobilogrecorder(log_message="├──├── Processing of log1p is done successfully.", log_level="INFO")
+        ##try_filter_data = filter_data.copy()
+        #sc.pp.regress_out(filter_data,['n_count'])
+        #mobilogger._mobilogrecorder(log_message="├──├── Processing of regress is done successfully.", log_level="INFO")
+        #sc.pp.scale(filter_data)
+        #mobilogger._mobilogrecorder(log_message="├──├── Processing of scale is done successfully.", log_level="INFO")
         if len(species_info) == 1:
             expect_bins = 4
             reso = 0.05
         else:
             expect_bins = len(species_info) * 2
             reso = 0.5
-        min_cells = int(filter_data.n_obs * 0.2)
-        sc.pp.filter_genes(filter_data, min_cells=min_cells)
         apply_high_variable_gene_list = []
         if len(species_info) >= 2:
+            sc.pp.normalize_total(filter_data,target_sum=1e6, exclude_highly_expressed=False, max_fraction=0.1)
+            sc.pp.log1p(filter_data)
             variable_gene_dict = {}
             species_barcode = {}
             if cell_stat_data is not None:
@@ -203,12 +218,16 @@ def process_secondary_analysis(filter_data, species_info, cell_stat_data, output
                     try:
                         sub_filter_data = filter_data[filter_data.obs_names.isin(species_barcode[i])]
                         sub_filter_data = sub_filter_data[:, sub_filter_data.var_names.str.startswith(i)]
-                        sc.pl.highest_expr_genes(sub_filter_data, n_top=20)
+                        sc.pl.highest_expr_genes(sub_filter_data, n_top=30)
                         gene_totals = np.ravel(sub_filter_data.X.sum(axis=0))
-                        top_idx = gene_totals.argsort()[-10:]
+                        top_idx = gene_totals.argsort()
+                        if len(top_idx) >= 20:
+                            apply_index = 20
+                        else:
+                            apply_index = len(top_idx)
                         high_expr_genes = sub_filter_data.var_names[top_idx].tolist()
                         high_expr_genes = [x for x in high_expr_genes if x.startswith(i)]
-                        sc.pp.highly_variable_genes(sub_filter_data, n_top_genes=10)
+                        sc.pp.highly_variable_genes(sub_filter_data, n_top_genes=apply_index)
                         highly_variable_genes = sub_filter_data.var[sub_filter_data.var['highly_variable']].index.tolist()
                         highly_variable_genes = [x for x in highly_variable_genes if x.startswith(i)]
                         variable_gene_dict[i] = list(set(high_expr_genes + highly_variable_genes))
@@ -224,16 +243,26 @@ def process_secondary_analysis(filter_data, species_info, cell_stat_data, output
                 json.dump(variable_gene_dict, json_file, indent=4)
             apply_high_variable_gene_list = list(set(apply_high_variable_gene_list))
             filter_data.var['highly_variable'] = filter_data.var_names.isin(apply_high_variable_gene_list)
+            sc.pp.regress_out(filter_data,['n_count'])
+            sc.pp.scale(filter_data)
         if apply_high_variable_gene_list == []:
             filter_data = try_filter_data.copy()
-            min_cells = int(filter_data.n_obs * 0.2)
+            sc.pp.filter_cells(filter_data, min_genes=30)
+            sc.pp.filter_cells(filter_data, max_genes=10000)
+            sc.pp.filter_cells(filter_data, min_counts=50)
+            min_cells = min(int(filter_data.n_obs * 0.2), 10)
             sc.pp.filter_genes(filter_data, min_cells=min_cells)
             if filter_data.n_obs < 100 or filter_data.n_vars < 100:
                 filter_data = try_filter_data.copy()
                 mobilogger._mobilogrecorder(log_message="├──├── No filter applied.", log_level="INFO")
+            sc.pp.normalize_total(filter_data,target_sum=1e6, exclude_highly_expressed=False, max_fraction=0.1)
+            sc.pp.log1p(filter_data)
             sc.pp.highly_variable_genes(filter_data,n_bins=expect_bins)
-            #sc.pp.regress_out(filter_data,['n_count'])
-            #sc.pp.scale(filter_data)
+            highly_variable_genes = filter_data.var[filter_data.var['highly_variable']]
+            if len(highly_variable_genes) < 10:
+                sc.pp.highly_variable_genes(filter_data)
+            sc.pp.regress_out(filter_data,['n_count'])
+            sc.pp.scale(filter_data)
         mobilogger._mobilogrecorder(log_message="├──├── Detecting of highly variable gene is done successfully.", log_level="INFO")
         highly_variable_genes = filter_data.var[filter_data.var['highly_variable']]
         with open(os.path.join(output_path, "highly_variable_genes.tsv"), "w") as f:
@@ -1238,6 +1267,11 @@ class Data_InjectTool:
             for i in drop_index:
                 if i in species_info.keys():
                     del species_info[i]
+        else:
+            for i in drop_index:
+                species_info[i]["line_color"] = nn
+                species_info[i]["fill_color"] = nn
+                nn += 1
         tmp_array = range(len(species_info) + 1)
         tmp_array = [i/(len(species_info)+1) for i in tmp_array]
         apply_colors = plt.cm.rainbow(tmp_array)

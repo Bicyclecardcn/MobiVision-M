@@ -633,7 +633,7 @@ class BacPreProcess(object):
             else:
                 nd = self.mobilogger._mobilogrecorder(log_message="Barcoding is done successfully. ",
                     log_level="INFO")
-            sample_stat = pd.read_csv(output_path + "/" + output_head + "_sample_barcode_stat.tsv", sep="\t")
+            sample_stat = pd.read_csv(output_path + "/" + output_head + "_sample_barcode_stat.tsv", sep="\t", dtype={"sample_barcode": 'str'})
             #for ii in range(try_times):
             #    cmd = "rm %s " %(output_path + "/tmp_go_%s.out" %(str(ii)))
             #    exit_code = self.mobiexecutor.execute(command=cmd,context={"pre-process": "rm"})
